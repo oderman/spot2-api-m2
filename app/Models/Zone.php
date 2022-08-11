@@ -8,5 +8,5 @@ use Illuminate\Database\Eloquent\Model;
 class Zone extends Model
 {
     use HasFactory;
-    protected $fillable = ['call_numero', 'uso_construccion', 'codigo_postal'];
+
 }

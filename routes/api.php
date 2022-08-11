@@ -20,6 +20,6 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-//Route::resource('zones','ZoneController');
 Route::get('/zones', 'App\Http\Controllers\ZoneController@index');
 Route::get('/zones/{id}', 'App\Http\Controllers\ZoneController@show');
+Route::get('price-m2/zip-codes/{zip_code}/aggregate/{operator}', 'App\Http\Controllers\ZoneController@showOperator');

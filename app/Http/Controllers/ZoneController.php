@@ -17,37 +17,9 @@ class ZoneController extends Controller
     {
         //
         $zones = Zone::all();
-        return $zones;
         
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
-    {
-        //
-        $zone = new Zone();
-        /*
-        $zone->call_numero =  $request->input('call_numero');
-        $zone->uso_construccion =  $request->input('uso_construccion');
-        $zone->codigo_postal =  $request->input('codigo_postal');
-
-        $zone->save();*/
-    }
 
     /**
      * Display the specified resource.
@@ -63,37 +35,109 @@ class ZoneController extends Controller
         return $zone;
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit($id)
+
+    
+    public function showOperator(Request $request)
     {
-        //
+        //dd($request);
+
+        $zone = Zone::where("codigo_postal","=", $request->zip_code)->get();
+
+        $result = json_decode($zone, true);
+        
+        if($request->operator === 'max'){
+            return $this->max($result);
+        }
+
+        if($request->operator === 'min'){
+            return $this->min($result);
+        }
+
+        if($request->operator === 'avg'){
+            return $this->avg($result);
+        }
+        
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $id)
+
+    public function max(array $zones = [])
     {
-        //
+        $itemsQuantity = count($zones);
+        
+        $maxPriceUnit = 0;
+        $maxPriceUnitConstruction = 0;
+
+        foreach($zones as $key => $value)
+        {
+            $priceUnit = $value["superficie_terreno"]  / ($value["valor_suelo"] - $value["subsidio"]);
+            $priceUnitConstruction = $value["superficie_construccion"]  / ($value["valor_suelo"] - $value["subsidio"]);
+
+            if($priceUnit > $maxPriceUnit ){
+                $maxPriceUnit = $priceUnit;
+            }
+
+            if($priceUnitConstruction > $priceUnitConstruction ){
+                $maxPriceUnitConstruction = $priceUnitConstruction;
+            }
+
+        }
+
+        
+
+        return response()->json([
+            'status' => true,
+            'payload' => [
+                "type" => "max",
+                "price_unit" => $maxPriceUnit,
+                "price_unit_construction" => $maxPriceUnitConstruction,
+                "elements" => $itemsQuantity
+            ]
+        ], 200);
+
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
+    public function min(array $zones = [])
     {
-        //
+        $itemsQuantity = count($zones);
+
+        $idQuery = 0;
+
+        $price_unit = $zones[$idQuery]["superficie_terreno"]  / ($zones[$idQuery]["valor_suelo"] - $zones[$idQuery]["subsidio"]);
+        $price_unit_construction = $zones[$idQuery]["superficie_construccion"]  / ($zones[$idQuery]["valor_suelo"] - $zones[$idQuery]["subsidio"]);
+
+        return response()->json([
+            'status' => true,
+            'payload' => [
+                "type" => "min",
+                "price_unit" => $price_unit,
+                "price_unit_construction" => $price_unit_construction,
+                "elements" => $itemsQuantity
+
+            ]
+        ], 200);
     }
+
+    public function avg(array $zones = [])
+    {
+        $itemsQuantity = count($zones);
+
+        $idQuery = 0;
+
+        $price_unit = $zones[$idQuery]["superficie_terreno"]  / ($zones[$idQuery]["valor_suelo"] - $zones[$idQuery]["subsidio"]);
+        $price_unit_construction = $zones[$idQuery]["superficie_construccion"]  / ($zones[$idQuery]["valor_suelo"] - $zones[$idQuery]["subsidio"]);
+
+        return response()->json([
+            'status' => true,
+            'payload' => [
+                "type" => "avg",
+                "price_unit" => $price_unit,
+                "price_unit_construction" => $price_unit_construction,
+                "elements" => $itemsQuantity
+
+            ]
+        ], 200);
+    }
+
+
+
 }

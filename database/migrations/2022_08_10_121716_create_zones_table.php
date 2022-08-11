@@ -15,7 +15,6 @@ return new class extends Migration
     {
         Schema::create('zones', function (Blueprint $table) {
             $table->id();
-            $table->json('geo_shape');
             $table->string('call_numero');
             $table->integer('codigo_postal');
             $table->string('colonia_predio');
