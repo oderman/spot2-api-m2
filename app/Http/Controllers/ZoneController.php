@@ -39,12 +39,72 @@ class ZoneController extends Controller
     
     public function showOperator(Request $request)
     {
-        //dd($request);
 
-        $zone = Zone::where("codigo_postal","=", $request->zip_code)->get();
+        if(!isset($_GET['construction_type']) or !is_numeric($_GET['construction_type'])){
+
+            return response()->json([
+                'status' => false,
+                'msg' => 'construction_type paramater is required and must to be of type numeric. ',
+            ], 400);
+
+        }
+
+        if($_GET['construction_type'] <1 or $_GET['construction_type']>7){
+
+            return response()->json([
+                'status' => false,
+                'msg' => 'construction_type must to be one number between 1 and 7',
+            ], 400);
+
+        }
+
+        switch($_GET['construction_type']){
+            case 1:
+                $constructionType = 'Areas verdes';
+            break;
+
+            case 2:
+                $constructionType = 'Centro de barrio';
+            break; 
+
+            case 3:
+                $constructionType = 'Equipamiento';
+            break; 
+
+            case 4:
+                $constructionType = 'Habitacional';
+            break; 
+
+            case 5:
+                $constructionType = 'Habitacional y comercial';
+            break; 
+
+            case 6:
+                $constructionType = 'Industrial';
+            break; 
+
+            case 7:
+                $constructionType = 'Sin Zonificacion';
+            break; 
+        }
+
+        $zone = Zone::
+        where("codigo_postal","=", $request->zip_code)
+        ->where("uso_construccion","=", $constructionType)
+        ->get();
+
+        $itemsQuantity = count($zone->all());
+
+        if($itemsQuantity === 0){
+            return response()->json([
+                'status' => false,
+                'msg' => 'It Was found 0 items.',
+            ], 200);
+        }
 
         $result = json_decode($zone, true);
         
+
         if($request->operator === 'max'){
             return $this->max($result);
         }
@@ -63,26 +123,33 @@ class ZoneController extends Controller
     public function max(array $zones = [])
     {
         $itemsQuantity = count($zones);
-        
-        $maxPriceUnit = 0;
-        $maxPriceUnitConstruction = 0;
 
         foreach($zones as $key => $value)
         {
+
             $priceUnit = $value["superficie_terreno"]  / ($value["valor_suelo"] - $value["subsidio"]);
             $priceUnitConstruction = $value["superficie_construccion"]  / ($value["valor_suelo"] - $value["subsidio"]);
 
-            if($priceUnit > $maxPriceUnit ){
+            if($key == 0){
+
                 $maxPriceUnit = $priceUnit;
+                $maxPriceUnitConstruction = $priceUnitConstruction;
+                
+            }else{
+
+                if($priceUnit > $maxPriceUnit ){
+                    $maxPriceUnit = $priceUnit;
+                }
+    
+                if($priceUnitConstruction > $maxPriceUnitConstruction ){
+                    $maxPriceUnitConstruction = $priceUnitConstruction;
+                }
+
             }
 
-            if($priceUnitConstruction > $priceUnitConstruction ){
-                $maxPriceUnitConstruction = $priceUnitConstruction;
-            }
 
         }
 
-        
 
         return response()->json([
             'status' => true,
@@ -98,42 +165,72 @@ class ZoneController extends Controller
 
     public function min(array $zones = [])
     {
+        
         $itemsQuantity = count($zones);
 
-        $idQuery = 0;
+        foreach($zones as $key => $value)
+        {
 
-        $price_unit = $zones[$idQuery]["superficie_terreno"]  / ($zones[$idQuery]["valor_suelo"] - $zones[$idQuery]["subsidio"]);
-        $price_unit_construction = $zones[$idQuery]["superficie_construccion"]  / ($zones[$idQuery]["valor_suelo"] - $zones[$idQuery]["subsidio"]);
+            $priceUnit = $value["superficie_terreno"]  / ($value["valor_suelo"] - $value["subsidio"]);
+            $priceUnitConstruction = $value["superficie_construccion"]  / ($value["valor_suelo"] - $value["subsidio"]);
+
+            if($key == 0){
+
+                $minPriceUnit = $priceUnit;
+                $minPriceUnitConstruction = $priceUnitConstruction;
+                
+            }else{
+
+                if($priceUnit < $minPriceUnit ){
+                    $minPriceUnit = $priceUnit;
+                }
+    
+                if($priceUnitConstruction < $minPriceUnitConstruction ){
+                    $minPriceUnitConstruction = $priceUnitConstruction;
+                }
+
+            }
+
+
+        }
+
 
         return response()->json([
             'status' => true,
             'payload' => [
                 "type" => "min",
-                "price_unit" => $price_unit,
-                "price_unit_construction" => $price_unit_construction,
+                "price_unit" => $minPriceUnit,
+                "price_unit_construction" => $minPriceUnitConstruction,
                 "elements" => $itemsQuantity
-
             ]
         ], 200);
+
     }
+    
 
     public function avg(array $zones = [])
     {
         $itemsQuantity = count($zones);
+        $avgPriceUnit = 0;
+        $avgPriceUnitConstruction = 0;
 
-        $idQuery = 0;
+        foreach($zones as $key => $value)
+        {
+            $avgPriceUnit += $value["superficie_terreno"]  / ($value["valor_suelo"] - $value["subsidio"]);
+            $avgPriceUnitConstruction += $value["superficie_construccion"]  / ($value["valor_suelo"] - $value["subsidio"]);
+        }
 
-        $price_unit = $zones[$idQuery]["superficie_terreno"]  / ($zones[$idQuery]["valor_suelo"] - $zones[$idQuery]["subsidio"]);
-        $price_unit_construction = $zones[$idQuery]["superficie_construccion"]  / ($zones[$idQuery]["valor_suelo"] - $zones[$idQuery]["subsidio"]);
+        $avgPriceUnit = ($avgPriceUnit/$itemsQuantity);
+        $avgPriceUnitConstruction = ($avgPriceUnitConstruction/$itemsQuantity);
+
 
         return response()->json([
             'status' => true,
             'payload' => [
                 "type" => "avg",
-                "price_unit" => $price_unit,
-                "price_unit_construction" => $price_unit_construction,
+                "price_unit" => $avgPriceUnit,
+                "price_unit_construction" => $avgPriceUnitConstruction,
                 "elements" => $itemsQuantity
-
             ]
         ], 200);
     }
