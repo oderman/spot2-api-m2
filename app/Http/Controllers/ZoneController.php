@@ -16,24 +16,9 @@ class ZoneController extends Controller
     public function index()
     {
         //
-        $zones = Zone::all();
         
     }
 
-
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show(Request $request)
-    {
-        //
-        $zone = Zone::findOrFail($request->id);
-        
-        return $zone;
-    }
 
     /**
      * Return messages with false status.
@@ -73,7 +58,12 @@ class ZoneController extends Controller
     }
 
 
-    
+    /**
+     * Receives a request, evaluates the parameters and returns a method
+     *
+     * @param  Request $request
+     * @return Method
+     */
     public function showOperator(Request $request)
     {
 
@@ -110,9 +100,13 @@ class ZoneController extends Controller
 
         $itemsQuantity = count($zone->all());
 
-        if($itemsQuantity === 0){
-            return $this->errors(200, 'It Was found 0 items.');
+        
+        $itemsQuantityVerify = $this->validateQuantity($itemsQuantity);
+
+        if($itemsQuantityVerify === false){
+            return $this->errors(200, 'It Was found 0 items.');  
         }
+
 
         $result = json_decode($zone, true);
         
@@ -218,6 +212,7 @@ class ZoneController extends Controller
     public function avg(array $zones = [])
     {
         $itemsQuantity = count($zones);
+        
         $avgPriceUnit = 0;
         $avgPriceUnitConstruction = 0;
 
@@ -239,6 +234,22 @@ class ZoneController extends Controller
 
 
         return $this->aggregateResult('avg', $avgPriceUnit, $avgPriceUnitConstruction, $itemsQuantity);
+    }
+
+    /**
+     * Return messages with true or false after validate if quantity is major than zero
+     *
+     * @param  int  $quantity
+     * @return Bool
+     */
+    public static function validateQuantity(Int $quantity){
+
+        if($quantity > 0){
+            return true;
+        }else{
+            return false;
+        }
+
     }
 
 
