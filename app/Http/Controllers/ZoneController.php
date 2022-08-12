@@ -110,17 +110,18 @@ class ZoneController extends Controller
 
         $result = json_decode($zone, true);
         
+        switch($request->operator){
 
-        if($request->operator === 'max'){
-            return $this->max($result);
-        }
+            case 'max': return $this->max($result); break;
 
-        if($request->operator === 'min'){
-            return $this->min($result);
-        }
+            case 'min': return $this->min($result); break;
 
-        if($request->operator === 'avg'){
-            return $this->avg($result);
+            case 'avg': return $this->avg($result); break;
+
+            default:
+                return $this->errors(400, 'the paramater aggregate must to be max, min or avg.');
+            break;
+
         }
         
     }
