@@ -35,6 +35,43 @@ class ZoneController extends Controller
         return $zone;
     }
 
+    /**
+     * Return messages with false status.
+     *
+     * @param  int  $code
+     * @param  String  $message
+     * @return \Illuminate\Http\Response
+     */
+    function errors(Int $code, String $message){
+
+        return response()->json([
+            'status' => false,
+            'message' => $message,
+        ], $code);
+
+    }
+
+    /**
+     * Return messages with true status and results of operations to max, min and avg.
+     *
+     * @param  int  $code
+     * @param  String  $message
+     * @return \Illuminate\Http\Response
+     */
+    function aggregateResult(String $type, Float $priceUnit, Float $priceUnitConstruction, Int $itemsQuantity){
+
+        return response()->json([
+            'status' => true,
+            'payload' => [
+                "type" => $type,
+                "price_unit" => $priceUnit,
+                "price_unit_construction" => $priceUnitConstruction,
+                "elements" => $itemsQuantity
+            ]
+        ], 200);
+
+    }
+
 
     
     public function showOperator(Request $request)
@@ -42,50 +79,28 @@ class ZoneController extends Controller
 
         if(!isset($_GET['construction_type']) or !is_numeric($_GET['construction_type'])){
 
-            return response()->json([
-                'status' => false,
-                'msg' => 'construction_type paramater is required and must to be of type numeric. ',
-            ], 400);
-
-        }
-
-        if($_GET['construction_type'] <1 or $_GET['construction_type']>7){
-
-            return response()->json([
-                'status' => false,
-                'msg' => 'construction_type must to be one number between 1 and 7',
-            ], 400);
-
+            return $this->errors(400, 'construction_type paramater is required and must to be of type numeric.');
         }
 
         switch($_GET['construction_type']){
-            case 1:
-                $constructionType = 'Areas verdes';
+
+            case 1: $constructionType = 'Áreas verdes'; break;
+
+            case 2: $constructionType = 'Centro de barrio'; break; 
+
+            case 3: $constructionType = 'Equipamiento'; break; 
+
+            case 4: $constructionType = 'Habitacional'; break; 
+
+            case 5: $constructionType = 'Habitacional y comercial'; break; 
+
+            case 6: $constructionType = 'Industrial'; break; 
+
+            case 7: $constructionType = 'Sin Zonificación'; break;
+
+            default:
+                return $this->errors(400, 'construction_type must to be one number between 1 and 7');
             break;
-
-            case 2:
-                $constructionType = 'Centro de barrio';
-            break; 
-
-            case 3:
-                $constructionType = 'Equipamiento';
-            break; 
-
-            case 4:
-                $constructionType = 'Habitacional';
-            break; 
-
-            case 5:
-                $constructionType = 'Habitacional y comercial';
-            break; 
-
-            case 6:
-                $constructionType = 'Industrial';
-            break; 
-
-            case 7:
-                $constructionType = 'Sin Zonificacion';
-            break; 
         }
 
         $zone = Zone::
@@ -96,10 +111,7 @@ class ZoneController extends Controller
         $itemsQuantity = count($zone->all());
 
         if($itemsQuantity === 0){
-            return response()->json([
-                'status' => false,
-                'msg' => 'It Was found 0 items.',
-            ], 200);
+            return $this->errors(200, 'It Was found 0 items.');
         }
 
         $result = json_decode($zone, true);
@@ -127,8 +139,15 @@ class ZoneController extends Controller
         foreach($zones as $key => $value)
         {
 
-            $priceUnit = $value["superficie_terreno"]  / ($value["valor_suelo"] - $value["subsidio"]);
-            $priceUnitConstruction = $value["superficie_construccion"]  / ($value["valor_suelo"] - $value["subsidio"]);
+            $subtract = ($value["valor_suelo"] - $value["subsidio"]);
+            
+            if($subtract > 0){
+                $priceUnit = $value["superficie_terreno"]  / $subtract ;
+                $priceUnitConstruction = $value["superficie_construccion"]  / $subtract;
+            }else{
+                continue;
+            }
+            
 
             if($key == 0){
 
@@ -150,16 +169,7 @@ class ZoneController extends Controller
 
         }
 
-
-        return response()->json([
-            'status' => true,
-            'payload' => [
-                "type" => "max",
-                "price_unit" => $maxPriceUnit,
-                "price_unit_construction" => $maxPriceUnitConstruction,
-                "elements" => $itemsQuantity
-            ]
-        ], 200);
+        return $this->aggregateResult('max', $maxPriceUnit, $maxPriceUnitConstruction, $itemsQuantity);
 
     }
 
@@ -171,8 +181,14 @@ class ZoneController extends Controller
         foreach($zones as $key => $value)
         {
 
-            $priceUnit = $value["superficie_terreno"]  / ($value["valor_suelo"] - $value["subsidio"]);
-            $priceUnitConstruction = $value["superficie_construccion"]  / ($value["valor_suelo"] - $value["subsidio"]);
+            $subtract = ($value["valor_suelo"] - $value["subsidio"]);
+            
+            if($subtract > 0){
+                $priceUnit = $value["superficie_terreno"]  / $subtract ;
+                $priceUnitConstruction = $value["superficie_construccion"]  / $subtract;
+            }else{
+                continue;
+            }
 
             if($key == 0){
 
@@ -194,16 +210,7 @@ class ZoneController extends Controller
 
         }
 
-
-        return response()->json([
-            'status' => true,
-            'payload' => [
-                "type" => "min",
-                "price_unit" => $minPriceUnit,
-                "price_unit_construction" => $minPriceUnitConstruction,
-                "elements" => $itemsQuantity
-            ]
-        ], 200);
+        return $this->aggregateResult('min', $minPriceUnit, $minPriceUnitConstruction, $itemsQuantity);
 
     }
     
@@ -216,23 +223,22 @@ class ZoneController extends Controller
 
         foreach($zones as $key => $value)
         {
-            $avgPriceUnit += $value["superficie_terreno"]  / ($value["valor_suelo"] - $value["subsidio"]);
-            $avgPriceUnitConstruction += $value["superficie_construccion"]  / ($value["valor_suelo"] - $value["subsidio"]);
+            $subtract = ($value["valor_suelo"] - $value["subsidio"]);
+            
+            if($subtract > 0){
+                $avgPriceUnit += $value["superficie_terreno"]  / $subtract ;
+                $avgPriceUnitConstruction += $value["superficie_construccion"]  / $subtract ;
+            }else{
+                continue;
+            }
+
         }
 
         $avgPriceUnit = ($avgPriceUnit/$itemsQuantity);
         $avgPriceUnitConstruction = ($avgPriceUnitConstruction/$itemsQuantity);
 
 
-        return response()->json([
-            'status' => true,
-            'payload' => [
-                "type" => "avg",
-                "price_unit" => $avgPriceUnit,
-                "price_unit_construction" => $avgPriceUnitConstruction,
-                "elements" => $itemsQuantity
-            ]
-        ], 200);
+        return $this->aggregateResult('avg', $avgPriceUnit, $avgPriceUnitConstruction, $itemsQuantity);
     }
 
 
