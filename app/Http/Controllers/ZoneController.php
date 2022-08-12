@@ -93,6 +93,11 @@ class ZoneController extends Controller
             break;
         }
 
+        if(!isset($request->zip_code) or !is_numeric($request->zip_code)){
+
+            return $this->errors(400, 'zip_code paramater is required and must to be of type numeric.');
+        }
+
         $zone = Zone::
         where("codigo_postal","=", $request->zip_code)
         ->where("uso_construccion","=", $constructionType)
