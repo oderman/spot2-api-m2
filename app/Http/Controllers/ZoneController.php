@@ -67,12 +67,14 @@ class ZoneController extends Controller
     public function showOperator(Request $request)
     {
 
-        if(!isset($_GET['construction_type']) or !is_numeric($_GET['construction_type'])){
+        $constructionTypeCode = $request->construction_type;
+
+        if(!isset($constructionTypeCode) or !is_numeric($constructionTypeCode)){
 
             return $this->errors(400, 'construction_type paramater is required and must to be of type numeric.');
         }
 
-        switch($_GET['construction_type']){
+        switch($constructionTypeCode){
 
             case 1: $constructionType = 'Áreas verdes'; break;
 
