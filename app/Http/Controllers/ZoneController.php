@@ -8,18 +8,7 @@ use App\Models\Zone;
 
 class ZoneController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
-    {
-        //
-        
-    }
-
-
+    
     /**
      * Return messages with false status.
      *
