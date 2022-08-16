@@ -1,0 +1,30 @@
+[33mcommit 05682dec719fec896b6be4ab637e9af13387f8f1[m[33m ([m[1;36mHEAD -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m
+Author: Jhon Oderman <jhooderman@gmail.com>
+Date:   Sun Aug 14 10:06:22 2022 -0400
+
+    Remove index method
+
+[1mdiff --git a/app/Http/Controllers/ZoneController.php b/app/Http/Controllers/ZoneController.php[m
+[1mindex 55737f8..99acb29 100644[m
+[1m--- a/app/Http/Controllers/ZoneController.php[m
+[1m+++ b/app/Http/Controllers/ZoneController.php[m
+[36m@@ -8,18 +8,7 @@[m
+ [m
+ class ZoneController extends Controller[m
+ {[m
+[31m-    /**[m
+[31m-     * Display a listing of the resource.[m
+[31m-     *[m
+[31m-     * @return \Illuminate\Http\Response[m
+[31m-     */[m
+[31m-    public function index()[m
+[31m-    {[m
+[31m-        //[m
+[31m-        [m
+[31m-    }[m
+[31m-[m
+[31m-[m
+[32m+[m[41m    [m
+     /**[m
+      * Return messages with false status.[m
+      *[m

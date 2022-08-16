@@ -28,8 +28,10 @@ class ZoneController extends Controller
     /**
      * Return messages with true status and results of operations to max, min and avg.
      *
-     * @param  int  $code
-     * @param  String  $message
+     * @param  int  $type
+     * @param  Float  $priceUnit
+     * @param  Float  $priceUnitConstruction
+     * @param  Int  $itemsQuantity
      * @return \Illuminate\Http\Response
      */
     function aggregateResult(String $type, Float $priceUnit, Float $priceUnitConstruction, Int $itemsQuantity){
